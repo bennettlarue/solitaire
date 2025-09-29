@@ -47,6 +47,28 @@ function gameReducer(state: GameState, action: Move): GameState {
         },
       };
     }
+
+    case "MOVE_CARDS": {
+      const { fromPile, toPile, cardIds } = action;
+      const fromPileData = state.piles[fromPile];
+      const toPileData = state.piles[toPile];
+
+      return {
+        ...state,
+        piles: {
+          ...state.piles,
+          [fromPile]: {
+            ...fromPileData,
+            cards: fromPileData.cards.filter((id) => !cardIds.includes(id)),
+          },
+          [toPile]: {
+            ...toPileData,
+            cards: [...toPileData.cards, ...cardIds],
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }
@@ -66,6 +88,7 @@ function initializeGameState(): GameState {
         suit,
         rank: rank as Rank,
         faceUp: false,
+        initiallyFaceUp: false,
         moveable: false,
       };
       cardIds.push(cardId);

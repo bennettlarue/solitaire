@@ -4,32 +4,38 @@ import * as React from "react";
 import { GameContext } from "../contexts/GameContext";
 import Card from "@/components/Card";
 import { AnimatePresence } from "motion/react";
-import { CardId } from "@/app/types";
+import { CardId, PileId } from "@/app/types";
 
 export interface IPileProps {
-  handleClick?: React.MouseEventHandler;
+  pileId: PileId;
   cards: CardId[];
 }
 
 export default function Pile(props: IPileProps) {
   const { state } = React.useContext(GameContext)!;
-  const { handleClick, cards } = props;
+  const { pileId, cards } = props;
 
   return (
     <>
-      {Object.values(cards).map((cardId) => {
-        return (
-          <Card
-            key={cardId}
-            layoutId={"card-" + cardId}
-            faceUp={
-              state.cards[cardId].faceUp ? state.cards[cardId].faceUp : false
-            }
-            suit={state.cards[cardId].suit}
-            rank={state.cards[cardId].rank}
-          />
-        );
-      })}
+      {Object.values(cards)
+        .slice(-5)
+        .map((cardId, index) => {
+          const card = state.cards[cardId];
+
+          return (
+            <Card
+              key={cardId}
+              cardId={cardId}
+              sourcePileId={pileId}
+              stackIndex={index}
+              layoutId={"card-" + cardId}
+              initiallyFaceUp={false}
+              faceUp={card.faceUp}
+              suit={card.suit}
+              rank={card.rank}
+            />
+          );
+        })}
     </>
   );
 }

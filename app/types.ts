@@ -16,6 +16,7 @@ export interface Card {
   suit: Suit;
   rank: Rank;
   faceUp: boolean;
+  initiallyFaceUp: boolean;
   moveable: boolean;
 }
 

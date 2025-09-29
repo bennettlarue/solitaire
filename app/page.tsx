@@ -1,4 +1,5 @@
 import StockPile from "@/components/StockPile";
+import Tableau from "@/components/Tableau";
 import WastePile from "@/components/WastePile";
 import Image from "next/image";
 
@@ -8,6 +9,7 @@ const Page = () => {
       {/* test area */}
       <StockPile />
       <WastePile />
+      <Tableau />
     </div>
   );
 };
