@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion, PanInfo } from "motion/react";
 import { CardId, PileId, Rank, Suit } from "@/app/types";
 import { GameContext } from "@/contexts/GameContext";
+import { isValidMove } from "@/app/utils/validateMove";
 
 export interface ICardProps {
   cardId: CardId;
@@ -14,6 +15,7 @@ export interface ICardProps {
   faceUp: boolean;
   initiallyFaceUp: boolean; // Determines if the card is initially rendered face up. Used for triggering (or preventing) flip animations during layout shifts.
   stackIndex?: number;
+  yOffset?: number;
 }
 
 export default function Card(props: ICardProps) {
@@ -25,9 +27,10 @@ export default function Card(props: ICardProps) {
     initiallyFaceUp,
     suit,
     rank,
+    yOffset,
   } = props;
   const imagePath = `/cards/${rank}${suit}.svg`;
-  const { dispatch } = React.useContext(GameContext)!;
+  const { state, dispatch } = React.useContext(GameContext)!;
 
   const getSuitName = (suit: string) => {
     switch (suit) {
@@ -64,7 +67,12 @@ export default function Card(props: ICardProps) {
   return (
     <motion.div
       drag
-      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragConstraints={{
+        left: 0,
+        right: 0,
+        top: yOffset || 0,
+        bottom: yOffset || 0,
+      }}
       dragElastic={1}
       onDragEnd={(event, info) => {
         const clientX = (event as MouseEvent).clientX;
@@ -77,14 +85,14 @@ export default function Card(props: ICardProps) {
 
         if (pileElement) {
           const targetPileId = pileElement.getAttribute("data-pile-id")!;
-          console.log("Dropped on pile:", targetPileId);
 
-          dispatch({
-            type: "MOVE_CARDS",
-            fromPile: sourcePileId,
-            toPile: targetPileId,
-            cardIds: [cardId],
-          });
+          if (isValidMove(state, cardId, sourcePileId, targetPileId))
+            dispatch({
+              type: "MOVE_CARDS",
+              fromPile: sourcePileId,
+              toPile: targetPileId,
+              cardIds: [cardId],
+            });
         }
       }}
       whileDrag={{
@@ -95,24 +103,24 @@ export default function Card(props: ICardProps) {
       }}
       dragMomentum={false}
       layoutId={layoutId}
-      initial={{ rotateY: initiallyFaceUp ? 180 : 0 }}
+      initial={{ rotateY: initiallyFaceUp ? 180 : 0, y: yOffset || 0 }}
       style={{
         transformStyle: "preserve-3d",
         height: 68 * 1.2,
         width: 50 * 1.2,
         zIndex: 10,
       }}
-      animate={{ rotateY: faceUp ? 0 : 180 }} // Fixed: 0 = face up, 180 = face down
+      animate={{ rotateY: faceUp ? 0 : 180, y: yOffset || 0 }} // Fixed: 0 = face up, 180 = face down
       transition={{
         // Layout animation (position) - quick and smooth
         layout: { duration: 0.3, ease: "easeInOut" },
-        // Rotation animation - delayed to avoid conflict
+        // Rotation animation - only animate when faceUp actually changes
         rotateY: {
           duration: 0.1,
           type: "spring",
           stiffness: 200,
           damping: 20,
-          delay: 0.3, // Start rotation after layout animation begins
+          delay: 0.3,
         },
       }}
       className="bg-white shadow w-fit h-fit mx-auto absolute" // Added relative

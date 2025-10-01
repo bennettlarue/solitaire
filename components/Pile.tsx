@@ -9,33 +9,36 @@ import { CardId, PileId } from "@/app/types";
 export interface IPileProps {
   pileId: PileId;
   cards: CardId[];
+
+  yOffset?: number;
 }
 
 export default function Pile(props: IPileProps) {
   const { state } = React.useContext(GameContext)!;
-  const { pileId, cards } = props;
+  const { pileId, cards, yOffset } = props;
 
   return (
     <>
       {Object.values(cards)
-        .slice(-5)
-        .map((cardId, index) => {
-          const card = state.cards[cardId];
+      .map((cardId, index) => {
+        const card = state.cards[cardId];
+        const cardYOffset = yOffset ? index * yOffset : 0;
 
-          return (
-            <Card
-              key={cardId}
-              cardId={cardId}
-              sourcePileId={pileId}
-              stackIndex={index}
-              layoutId={"card-" + cardId}
-              initiallyFaceUp={false}
-              faceUp={card.faceUp}
-              suit={card.suit}
-              rank={card.rank}
-            />
-          );
-        })}
+        return (
+          <Card
+            yOffset={cardYOffset}
+            key={cardId}
+            cardId={cardId}
+            sourcePileId={pileId}
+            stackIndex={index}
+            layoutId={"card-" + cardId}
+            initiallyFaceUp={false}
+            faceUp={card.faceUp}
+            suit={card.suit}
+            rank={card.rank}
+          />
+        );
+      })}
     </>
   );
 }

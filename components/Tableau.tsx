@@ -7,20 +7,26 @@ import { AnimatePresence } from "motion/react";
 import Pile from "./Pile";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
+import { PileId } from "@/app/types";
 
-function TableauComponent() {
+export interface ITableauProps {
+  pileId: PileId;
+}
+
+function TableauComponent(props: ITableauProps) {
+  const { pileId } = props;
   const { state } = React.useContext(GameContext)!;
-  const tableauCards = state.piles[state.tableaus[0]].cards;
+  const tableauCards = state.piles[pileId].cards;
   const pileRef = useRef<HTMLDivElement>(null);
 
   return (
     <AnimatePresence>
       <div
         ref={pileRef}
-        data-pile-id={state.tableaus[0]}
+        data-pile-id={pileId}
         className="p-2 bg-blue-200 w-22 h-28"
       >
-        <Pile pileId={state.tableaus[0]} cards={tableauCards} />
+        <Pile yOffset={30} pileId={pileId} cards={tableauCards} />
       </div>
     </AnimatePresence>
   );

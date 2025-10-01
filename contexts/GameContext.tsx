@@ -74,7 +74,26 @@ function gameReducer(state: GameState, action: Move): GameState {
   }
 }
 
-function initializeGameState(): GameState {
+// Helper function to create a perfectly stackable deck for testing
+function createTestDeck(): CardId[] {
+  // Full deck: all Aces, then all 2s, etc., alternating colors within each rank
+  const redSuits: Suit[] = ["h", "d"];
+  const blackSuits: Suit[] = ["c", "s"];
+  const testCards: CardId[] = [];
+
+  for (let rank = 1; rank <= 13; rank++) {
+    // For each rank, add all 4 suits, alternating colors
+    // Start with black suits for this rank
+    testCards.push(`${blackSuits[0]}${rank}`); // clubs
+    testCards.push(`${redSuits[0]}${rank}`);   // hearts
+    testCards.push(`${blackSuits[1]}${rank}`); // spades
+    testCards.push(`${redSuits[1]}${rank}`);   // diamonds
+  }
+
+  return testCards;
+}
+
+function initializeGameState(testMode: boolean = false): GameState {
   const suits: Suit[] = ["c", "d", "h", "s"];
   const cards: Record<CardId, Card> = {};
   const cardIds: CardId[] = [];
@@ -95,10 +114,18 @@ function initializeGameState(): GameState {
     }
   });
 
-  // Shuffle the deck
-  for (let i = cardIds.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cardIds[i], cardIds[j]] = [cardIds[j], cardIds[i]];
+  // Shuffle the deck (or use test sequence)
+  if (testMode) {
+    // Use perfectly stackable sequence for testing
+    const testSequence = createTestDeck();
+    cardIds.length = 0;
+    cardIds.push(...testSequence);
+  } else {
+    // Normal random shuffle
+    for (let i = cardIds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cardIds[i], cardIds[j]] = [cardIds[j], cardIds[i]];
+    }
   }
 
   // Create piles
@@ -165,7 +192,8 @@ export const GameContext = createContext<{
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   // Ensure initialization only happens once, even in StrictMode
-  const initialState = React.useMemo(() => initializeGameState(), []);
+  // Set testMode to true for a perfectly stackable deck
+  const initialState = React.useMemo(() => initializeGameState(true), []);
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
   return (
