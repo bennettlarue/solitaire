@@ -19,6 +19,38 @@ function TableauComponent(props: ITableauProps) {
   const tableauCards = state.piles[pileId].cards;
   const pileRef = useRef<HTMLDivElement>(null);
 
+  const buildCardTree = (startIndex: number): React.ReactNode => {
+    if (startIndex >= tableauCards.length) return null;
+
+    const cardId = tableauCards[startIndex];
+    const card = state.cards[cardId];
+    const cardYOffset = startIndex === 0 ? 0 : 20;
+
+    const cardIdsInStack = tableauCards.slice(startIndex);
+
+    const childCard = buildCardTree(startIndex + 1);
+
+    return (
+      <Card
+        yOffset={cardYOffset}
+        key={cardId}
+        cardId={cardId}
+        sourcePileId={pileId}
+        stackIndex={startIndex}
+        cardsIdsInStack={cardIdsInStack}
+        layoutId={"card-" + cardId}
+        initiallyFaceUp={false}
+        faceUp={card.faceUp}
+        suit={card.suit}
+        rank={card.rank}
+      >
+        {childCard}
+      </Card>
+    );
+  };
+
+  const cardTree = buildCardTree(0);
+
   return (
     <AnimatePresence>
       <div
@@ -26,7 +58,8 @@ function TableauComponent(props: ITableauProps) {
         data-pile-id={pileId}
         className="p-2 bg-blue-200 w-22 h-28"
       >
-        <Pile yOffset={30} pileId={pileId} cards={tableauCards} />
+        {/* <Pile yOffset={30} pileId={pileId} cards={tableauCards} /> */}
+        {cardTree}
       </div>
     </AnimatePresence>
   );

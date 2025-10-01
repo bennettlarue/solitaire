@@ -11,7 +11,7 @@ const Page = () => {
   const { state } = React.useContext(GameContext)!;
 
   return (
-    <div className="flex gap-10">
+    <div className="flex p-10 gap-10">
       {/* test area */}
       <StockPile />
       <WastePile />

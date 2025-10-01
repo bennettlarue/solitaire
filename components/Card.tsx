@@ -5,6 +5,7 @@ import { motion, PanInfo } from "motion/react";
 import { CardId, PileId, Rank, Suit } from "@/app/types";
 import { GameContext } from "@/contexts/GameContext";
 import { isValidMove } from "@/app/utils/validateMove";
+import { useRef } from "react";
 
 export interface ICardProps {
   cardId: CardId;
@@ -14,8 +15,10 @@ export interface ICardProps {
   rank: Rank;
   faceUp: boolean;
   initiallyFaceUp: boolean; // Determines if the card is initially rendered face up. Used for triggering (or preventing) flip animations during layout shifts.
-  stackIndex?: number;
+  stackIndex: number;
+  cardsIdsInStack?: CardId[];
   yOffset?: number;
+  children?: React.ReactNode;
 }
 
 export default function Card(props: ICardProps) {
@@ -27,7 +30,10 @@ export default function Card(props: ICardProps) {
     initiallyFaceUp,
     suit,
     rank,
+    stackIndex,
+    cardsIdsInStack,
     yOffset,
+    children,
   } = props;
   const imagePath = `/cards/${rank}${suit}.svg`;
   const { state, dispatch } = React.useContext(GameContext)!;
@@ -91,7 +97,7 @@ export default function Card(props: ICardProps) {
               type: "MOVE_CARDS",
               fromPile: sourcePileId,
               toPile: targetPileId,
-              cardIds: [cardId],
+              cardIds: cardsIdsInStack || [cardId],
             });
         }
       }}
@@ -163,6 +169,7 @@ export default function Card(props: ICardProps) {
           }}
         />
       </div>
+      {children}
     </motion.div>
   );
 }

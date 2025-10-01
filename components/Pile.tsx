@@ -19,14 +19,13 @@ export default function Pile(props: IPileProps) {
 
   return (
     <>
-      {Object.values(cards)
-      .map((cardId, index) => {
+      {Object.values(cards).map((cardId, index) => {
         const card = state.cards[cardId];
         const cardYOffset = yOffset ? index * yOffset : 0;
 
         return (
           <Card
-            yOffset={cardYOffset}
+            yOffset={index * -0.3}
             key={cardId}
             cardId={cardId}
             sourcePileId={pileId}
