@@ -13,7 +13,7 @@ function WastePileComponent() {
 
   return (
     <AnimatePresence>
-      <div className="p-2 bg-red-200 w-22 h-28">
+      <div className="p-2 bg-red-200 w-22 h-28 relative">
         <Pile pileId={state.waste} cards={wasteCards} />
       </div>
     </AnimatePresence>

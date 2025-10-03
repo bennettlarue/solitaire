@@ -69,6 +69,37 @@ function gameReducer(state: GameState, action: Move): GameState {
       };
     }
 
+    case "DEAL_SINGLE_CARD": {
+      const { tableauIndex } = action;
+      const cardId =
+        state.piles[state.stock].cards[
+          state.piles[state.stock].cards.length - 1
+        ];
+      const stockPile = state.piles[state.stock];
+      const tableauPile = state.piles[state.tableaus[tableauIndex]];
+
+      return {
+        ...state,
+        piles: {
+          ...state.piles,
+          [state.stock]: {
+            ...stockPile,
+            cards: stockPile.cards.filter((id) => id !== cardId),
+          },
+          [state.tableaus[tableauIndex]]: {
+            ...tableauPile,
+            cards: [...tableauPile.cards, cardId],
+          },
+        },
+        cards: {
+          ...state.cards,
+          [cardId]: {
+            ...state.cards[cardId],
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }
@@ -85,9 +116,9 @@ function createTestDeck(): CardId[] {
     // For each rank, add all 4 suits, alternating colors
     // Start with black suits for this rank
     testCards.push(`${blackSuits[0]}${rank}`); // clubs
-    testCards.push(`${redSuits[0]}${rank}`);   // hearts
+    testCards.push(`${redSuits[0]}${rank}`); // hearts
     testCards.push(`${blackSuits[1]}${rank}`); // spades
-    testCards.push(`${redSuits[1]}${rank}`);   // diamonds
+    testCards.push(`${redSuits[1]}${rank}`); // diamonds
   }
 
   return testCards;
@@ -183,6 +214,31 @@ function initializeGameState(testMode: boolean = false): GameState {
     waste: wasteId,
     flipCount: 1,
   };
+}
+
+export async function dealInitialCards(
+  dispatch: React.Dispatch<Move>,
+  state: GameState
+) {
+  // Get initial stock cards
+  const stockCards = [...state.piles[state.stock].cards];
+
+  for (let tableauIndex = 0; tableauIndex < 7; tableauIndex++) {
+    for (let cardNum = 0; cardNum <= tableauIndex; cardNum++) {
+      // Pop from our local array to track which cards have been dealt
+      const cardId = stockCards.pop()!;
+
+      dispatch({
+        type: "MOVE_CARDS",
+        fromPile: state.stock,
+        toPile: state.tableaus[tableauIndex],
+        cardIds: [cardId],
+      });
+
+      // Small delay to let Motion complete layout animations
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+  }
 }
 
 export const GameContext = createContext<{

@@ -20,7 +20,7 @@ function StockPileComponent() {
 
   return (
     <AnimatePresence>
-      <div className="p-2 bg-green-200 w-22 h-28" onClick={handleClick}>
+      <div className="p-2 bg-green-200 w-22 h-28 relative" onClick={handleClick}>
         <Pile pileId={state.stock} cards={stockCards} />
       </div>
     </AnimatePresence>

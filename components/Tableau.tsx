@@ -4,7 +4,6 @@ import * as React from "react";
 import { GameContext } from "../contexts/GameContext";
 import Card from "@/components/Card";
 import { AnimatePresence } from "motion/react";
-import Pile from "./Pile";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { PileId } from "@/app/types";
@@ -39,7 +38,7 @@ function TableauComponent(props: ITableauProps) {
         stackIndex={startIndex}
         cardsIdsInStack={cardIdsInStack}
         layoutId={"card-" + cardId}
-        initiallyFaceUp={false}
+        initiallyFaceUp={card.initiallyFaceUp}
         faceUp={card.faceUp}
         suit={card.suit}
         rank={card.rank}
@@ -56,9 +55,9 @@ function TableauComponent(props: ITableauProps) {
       <div
         ref={pileRef}
         data-pile-id={pileId}
-        className="p-2 bg-blue-200 w-22 h-28"
+        className="p-2 bg-blue-200 w-22 h-28 relative"
+        style={{ height: `${130 + (tableauCards.length - 1) * 20}px` }}
       >
-        {/* <Pile yOffset={30} pileId={pileId} cards={tableauCards} /> */}
         {cardTree}
       </div>
     </AnimatePresence>

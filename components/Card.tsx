@@ -18,6 +18,7 @@ export interface ICardProps {
   stackIndex: number;
   cardsIdsInStack?: CardId[];
   yOffset?: number;
+  scale?: number;
   children?: React.ReactNode;
 }
 
@@ -33,6 +34,7 @@ export default function Card(props: ICardProps) {
     stackIndex,
     cardsIdsInStack,
     yOffset,
+    scale,
     children,
   } = props;
   const imagePath = `/cards/${rank}${suit}.svg`;
@@ -109,14 +111,23 @@ export default function Card(props: ICardProps) {
       }}
       dragMomentum={false}
       layoutId={layoutId}
-      initial={{ rotateY: initiallyFaceUp ? 180 : 0, y: yOffset || 0 }}
+      layout
+      initial={{
+        rotateY: initiallyFaceUp ? 0 : 180,
+        y: yOffset || 0,
+        scale: scale || 1,
+      }}
       style={{
         transformStyle: "preserve-3d",
         height: 68 * 1.2,
         width: 50 * 1.2,
         zIndex: 10,
       }}
-      animate={{ rotateY: faceUp ? 0 : 180, y: yOffset || 0 }} // Fixed: 0 = face up, 180 = face down
+      animate={{
+        rotateY: faceUp ? 0 : 180,
+        y: yOffset || 0,
+        scale: scale || 1,
+      }} // Fixed: 0 = face up, 180 = face down
       transition={{
         // Layout animation (position) - quick and smooth
         layout: { duration: 0.3, ease: "easeInOut" },
@@ -129,7 +140,7 @@ export default function Card(props: ICardProps) {
           delay: 0.3,
         },
       }}
-      className="bg-white shadow w-fit h-fit mx-auto absolute" // Added relative
+      className="bg-white shadow-sm w-fit h-fit mx-auto absolute rounded-sm" // Added relative
     >
       {/* Front face (card face) */}
       <div

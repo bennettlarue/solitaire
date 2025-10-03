@@ -6,7 +6,16 @@ export type PileId = string;
 
 export type Move =
   | { type: "FLIP_STOCK" }
-  | { type: "MOVE_CARDS"; fromPile: PileId; toPile: PileId; cardIds: CardId[] }
+  | {
+      type: "MOVE_CARDS";
+      fromPile: PileId;
+      toPile: PileId;
+      cardIds: CardId[];
+    }
+  | {
+      type: "DEAL_SINGLE_CARD";
+      tableauIndex: number;
+    }
   | { type: "REVEAL_TOP"; pileId: PileId }
   | { type: "DEAL_INITAL_CARDS" }
   | { type: "RESET_GAME" };
