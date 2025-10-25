@@ -5,7 +5,7 @@ export type PileType = "stock" | "waste" | "foundation" | "tableau";
 export type PileId = string;
 
 export type Move =
-  | { type: "FLIP_STOCK" }
+  | { type: "CYCLE_SINGLE_STOCK" }
   | {
       type: "MOVE_CARDS";
       fromPile: PileId;
@@ -16,9 +16,8 @@ export type Move =
       type: "DEAL_SINGLE_CARD";
       tableauIndex: number;
     }
-  | { type: "REVEAL_TOP"; pileId: PileId }
-  | { type: "DEAL_INITAL_CARDS" }
-  | { type: "RESET_GAME" };
+  | { type: "RESET_GAME" }
+  | { type: "REVEAL_SINGLE_CARD"; cardId: CardId };
 
 export interface Card {
   id: CardId;

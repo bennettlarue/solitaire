@@ -16,7 +16,7 @@ import {
 
 function gameReducer(state: GameState, action: Move): GameState {
   switch (action.type) {
-    case "FLIP_STOCK": {
+    case "CYCLE_SINGLE_STOCK": {
       const stockPile = state.piles[state.stock];
       const wastePile = state.piles[state.waste];
 
@@ -28,13 +28,14 @@ function gameReducer(state: GameState, action: Move): GameState {
           ...state.piles,
           [state.stock]: {
             ...stockPile,
-            cards: stockPile.cards.slice(0, -state.flipCount),
+            cards: stockPile.cards.slice(0, -1),
           },
           [state.waste]: {
             ...wastePile,
             cards: [...wastePile.cards, ...cardsToFlip],
           },
         },
+        /*
         cards: {
           ...state.cards,
           ...cardsToFlip.reduce(
@@ -45,6 +46,7 @@ function gameReducer(state: GameState, action: Move): GameState {
             {}
           ),
         },
+        */
       };
     }
 
@@ -52,6 +54,18 @@ function gameReducer(state: GameState, action: Move): GameState {
       const { fromPile, toPile, cardIds } = action;
       const fromPileData = state.piles[fromPile];
       const toPileData = state.piles[toPile];
+
+      let cardToReveal: CardId | null = null;
+
+      if (
+        fromPileData.type === "tableau" &&
+        fromPileData.cards.length > cardIds.length
+      ) {
+        const cardToRevealIndex = fromPileData.cards.indexOf(cardIds[0]) - 1;
+        if (cardToRevealIndex >= 0) {
+          cardToReveal = fromPileData.cards[cardToRevealIndex];
+        }
+      }
 
       return {
         ...state,
@@ -66,35 +80,58 @@ function gameReducer(state: GameState, action: Move): GameState {
             cards: [...toPileData.cards, ...cardIds],
           },
         },
+        cards: cardToReveal
+          ? {
+              ...state.cards,
+              [cardToReveal]: {
+                ...state.cards[cardToReveal],
+                faceUp: true,
+              },
+            }
+          : state.cards,
       };
     }
 
     case "DEAL_SINGLE_CARD": {
       const { tableauIndex } = action;
+
       const cardId =
         state.piles[state.stock].cards[
           state.piles[state.stock].cards.length - 1
         ];
-      const stockPile = state.piles[state.stock];
-      const tableauPile = state.piles[state.tableaus[tableauIndex]];
 
       return {
         ...state,
         piles: {
           ...state.piles,
           [state.stock]: {
-            ...stockPile,
-            cards: stockPile.cards.filter((id) => id !== cardId),
+            ...state.piles[state.stock],
+            cards: state.piles[state.stock].cards.filter((id) => id !== cardId),
           },
           [state.tableaus[tableauIndex]]: {
-            ...tableauPile,
-            cards: [...tableauPile.cards, cardId],
+            ...state.piles[state.tableaus[tableauIndex]],
+            cards: [...state.piles[state.tableaus[tableauIndex]].cards, cardId],
           },
         },
         cards: {
           ...state.cards,
           [cardId]: {
             ...state.cards[cardId],
+          },
+        },
+      };
+    }
+
+    case "REVEAL_SINGLE_CARD": {
+      const { cardId } = action;
+
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [cardId]: {
+            ...state.cards[cardId],
+            faceUp: true,
           },
         },
       };
@@ -164,10 +201,11 @@ function initializeGameState(testMode: boolean = false): GameState {
   const tableaus: PileId[] = [];
   const foundations: PileId[] = [];
 
-  // Create tableau piles (7 columns)
+  // Create tableau piles and deal cards directly during initialization
   for (let i = 0; i < 7; i++) {
     const pileId = `tableau-${i}`;
     tableaus.push(pileId);
+
     piles[pileId] = {
       id: pileId,
       type: "tableau",
@@ -186,12 +224,12 @@ function initializeGameState(testMode: boolean = false): GameState {
     };
   });
 
-  // Create stock pile
+  // Create stock pile with remaining cards
   const stockId = "stock";
   piles[stockId] = {
     id: stockId,
     type: "stock",
-    cards: [...cardIds],
+    cards: cardIds, // Remaining cards after dealing to tableaus
   };
 
   // Create waste pile
@@ -212,32 +250,55 @@ function initializeGameState(testMode: boolean = false): GameState {
     foundations,
     stock: stockId,
     waste: wasteId,
-    flipCount: 1,
+    flipCount: 3,
   };
 }
 
-export async function dealInitialCards(
-  dispatch: React.Dispatch<Move>,
-  state: GameState
+export async function dealCards(
+  state: GameState,
+  dispatch: React.Dispatch<Move>
 ) {
-  // Get initial stock cards
-  const stockCards = [...state.piles[state.stock].cards];
+  const topCards: CardId[] = [];
+  let cardsTaken = 0;
 
-  for (let tableauIndex = 0; tableauIndex < 7; tableauIndex++) {
-    for (let cardNum = 0; cardNum <= tableauIndex; cardNum++) {
-      // Pop from our local array to track which cards have been dealt
-      const cardId = stockCards.pop()!;
+  for (let cardPosition = 0; cardPosition < 7; cardPosition++) {
+    for (let tableauIndex = cardPosition; tableauIndex < 7; tableauIndex++) {
+      // Save the top card for the tableau that's being completed in this round
+      if (tableauIndex === cardPosition) {
+        topCards[cardPosition] =
+          state.piles[state.stock].cards[
+            state.piles[state.stock].cards.length - cardsTaken - 1
+          ];
+      }
 
       dispatch({
-        type: "MOVE_CARDS",
-        fromPile: state.stock,
-        toPile: state.tableaus[tableauIndex],
-        cardIds: [cardId],
+        type: "DEAL_SINGLE_CARD",
+        tableauIndex: tableauIndex,
       });
-
-      // Small delay to let Motion complete layout animations
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await new Promise((r) => setTimeout(r, 150));
+      cardsTaken++;
     }
+  }
+
+  for (let tableauIndex = 0; tableauIndex < 7; tableauIndex++) {
+    console.log(topCards[tableauIndex]);
+    dispatch({
+      type: "REVEAL_SINGLE_CARD",
+      cardId: topCards[tableauIndex],
+    });
+
+    await new Promise((r) => setTimeout(r, 130));
+  }
+}
+
+export async function flipStock(
+  state: GameState,
+  dispatch: React.Dispatch<Move>
+) {
+  for (let i = 0; i < state.flipCount; i++) {
+    dispatch({
+      type: "CYCLE_SINGLE_STOCK",
+    });
   }
 }
 
@@ -249,7 +310,7 @@ export const GameContext = createContext<{
 export function GameProvider({ children }: { children: React.ReactNode }) {
   // Ensure initialization only happens once, even in StrictMode
   // Set testMode to true for a perfectly stackable deck
-  const initialState = React.useMemo(() => initializeGameState(true), []);
+  const initialState = React.useMemo(() => initializeGameState(false), []);
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
   return (

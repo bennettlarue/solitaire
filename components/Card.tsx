@@ -28,10 +28,8 @@ export default function Card(props: ICardProps) {
     sourcePileId,
     layoutId,
     faceUp,
-    initiallyFaceUp,
     suit,
     rank,
-    stackIndex,
     cardsIdsInStack,
     yOffset,
     scale,
@@ -39,6 +37,23 @@ export default function Card(props: ICardProps) {
   } = props;
   const imagePath = `/cards/${rank}${suit}.svg`;
   const { state, dispatch } = React.useContext(GameContext)!;
+
+  // Track what face to display (may differ from faceUp during flip animation)
+  const [displayFaceUp, setDisplayFaceUp] = React.useState(faceUp);
+  const [isFlipping, setIsFlipping] = React.useState(false);
+  const prevFaceUpRef = useRef(faceUp);
+
+  React.useEffect(() => {
+    // Only animate flip if faceUp changed (not initial render)
+    if (prevFaceUpRef.current !== faceUp) {
+      setIsFlipping(true);
+      // Swap the displayed image halfway through the flip (when scaleX = 0)
+      setTimeout(() => {
+        setDisplayFaceUp(faceUp);
+      }, 150); // Half of the 300ms flip duration
+    }
+    prevFaceUpRef.current = faceUp;
+  }, [faceUp]);
 
   const getSuitName = (suit: string) => {
     switch (suit) {
@@ -113,72 +128,63 @@ export default function Card(props: ICardProps) {
       layoutId={layoutId}
       layout
       initial={{
-        rotateY: initiallyFaceUp ? 0 : 180,
         y: yOffset || 0,
         scale: scale || 1,
       }}
       style={{
-        transformStyle: "preserve-3d",
         height: 68 * 1.2,
         width: 50 * 1.2,
         zIndex: 10,
+        position: "absolute",
       }}
       animate={{
-        rotateY: faceUp ? 0 : 180,
         y: yOffset || 0,
         scale: scale || 1,
-      }} // Fixed: 0 = face up, 180 = face down
+        scaleX: isFlipping ? [1, 0, 1] : 1,
+      }}
+      onAnimationComplete={() => {
+        if (isFlipping) {
+          setIsFlipping(false);
+        }
+      }}
       transition={{
         // Layout animation (position) - quick and smooth
         layout: { duration: 0.3, ease: "easeInOut" },
-        // Rotation animation - only animate when faceUp actually changes
-        rotateY: {
-          duration: 0.1,
-          type: "spring",
-          stiffness: 200,
-          damping: 20,
-          delay: 0.3,
+        // Flip animation
+        scaleX: { duration: 0.3, ease: "easeInOut" },
+        // Other animations
+        default: {
+          duration: 0.2,
+          ease: "easeInOut",
         },
       }}
-      className="bg-white shadow-sm w-fit h-fit mx-auto absolute rounded-sm" // Added relative
+      className="bg-white shadow-sm w-fit h-fit mx-auto absolute rounded-sm"
     >
-      {/* Front face (card face) */}
-      <div
-        className="absolute inset-0 flex items-center justify-center p-1"
-        style={{
-          backfaceVisibility: "hidden",
-          WebkitBackfaceVisibility: "hidden",
-        }}
-      >
-        <img
-          src={imagePath}
-          alt={altText}
-          className="pointer-events-none"
-          style={{
-            height: 68,
-            width: 50,
-          }}
-        />
-      </div>
-
-      {/* Back face (card back) */}
-      <div
-        className="absolute inset-0 flex items-center justify-center"
-        style={{
-          backfaceVisibility: "hidden",
-          WebkitBackfaceVisibility: "hidden",
-          transform: "rotateY(180deg)",
-        }}
-      >
-        <img
-          src={"/cards/joker.svg"}
-          alt="Card back"
-          className="pointer-events-none"
-          style={{
-            height: 68,
-            width: 50,
-          }}
-        />
+      {/* Conditionally render front or back based on displayFaceUp (visual state during flip) */}
+      <div className="absolute w-full h-full flex items-center justify-center">
+        {displayFaceUp ? (
+          // Card face
+          <img
+            src={imagePath}
+            alt={altText}
+            className="pointer-events-none p-1"
+            style={{
+              height: 68,
+              width: 50,
+            }}
+          />
+        ) : (
+          // Card back
+          <img
+            src={"/cards/joker.svg"}
+            alt="Card back"
+            className="pointer-events-none"
+            style={{
+              height: 68,
+              width: 50,
+            }}
+          />
+        )}
       </div>
       {children}
     </motion.div>

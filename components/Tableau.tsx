@@ -23,7 +23,7 @@ function TableauComponent(props: ITableauProps) {
 
     const cardId = tableauCards[startIndex];
     const card = state.cards[cardId];
-    const cardYOffset = startIndex === 0 ? 0 : 20;
+    const cardYOffset = startIndex === 0 ? 0 : 30;
 
     const cardIdsInStack = tableauCards.slice(startIndex);
 
